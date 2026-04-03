@@ -15,7 +15,11 @@ WORKDIR /var/www
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction \
+# Build-time .env + key (composer scripts need them); Render APP_KEY overrides at runtime
+RUN cp .env.example .env \
+    && composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
+    && php artisan key:generate --force --no-interaction \
+    && php artisan package:discover --ansi \
     && npm ci \
     && npm run build \
     && chmod -R 775 storage bootstrap/cache
