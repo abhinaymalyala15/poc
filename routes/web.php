@@ -5,6 +5,10 @@ use App\Http\Controllers\CallController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/up', function () {
+    return response()->noContent(200);
+});
+
 Route::get('/', function () {
     return view('welcome');
 });
