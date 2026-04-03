@@ -1,8 +1,8 @@
 FROM php:8.3-cli
 
 RUN apt-get update && apt-get install -y \
-    unzip git curl libzip-dev zip libpq-dev \
-    && docker-php-ext-install zip pdo pdo_pgsql \
+    unzip git curl libzip-dev zip libsqlite3-dev \
+    && docker-php-ext-install zip pdo_sqlite \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -15,13 +15,16 @@ WORKDIR /var/www
 
 COPY . .
 
-# Build-time .env + key (composer scripts need them); Render APP_KEY overrides at runtime
+# Build-time .env + key; Render APP_KEY overrides at runtime
 RUN cp .env.example .env \
     && composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
     && php artisan key:generate --force --no-interaction \
     && php artisan package:discover --ansi \
     && npm ci \
     && npm run build \
+    && mkdir -p database \
+    && touch database/database.sqlite \
+    && chmod 664 database/database.sqlite \
     && chmod -R 775 storage bootstrap/cache
 
 ENV PORT=10000

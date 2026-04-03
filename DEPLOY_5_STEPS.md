@@ -11,6 +11,8 @@ Do these in order in your browser. This repo already includes `render.yaml` at t
 3. Connect **GitHub** and select repo **`abhinaymalyala15/poc`** (or your fork).
 4. Confirm Render detects **`render.yaml`** → **Apply** / create resources.
 
+> **Note:** The blueprint uses **SQLite inside the container** (no paid Postgres). **Call logs / users are wiped when the service redeploys** or the disk is cleared.
+
 ---
 
 ## Step 2 — Wait for deploy

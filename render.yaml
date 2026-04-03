@@ -1,11 +1,6 @@
-# Render Blueprint: https://render.com/docs/blueprint-spec
-# Docker web service (see ./Dockerfile). Set APP_KEY, APP_URL, API keys in dashboard.
-# Shell: php artisan db:seed --force (after ADMIN_* env)
-
-databases:
-  - name: poc-db
-    databaseName: poc
-    user: poc
+# Free tier: no managed Postgres (SQLite file inside the container; data resets on redeploy).
+# Docker on Render uses blueprint field `runtime: docker` (not `env: docker`).
+# Set APP_KEY, APP_URL, Twilio/OpenAI in the dashboard. Shell: php artisan db:seed --force
 
 services:
   - type: web
@@ -23,8 +18,6 @@ services:
       - key: ALLOW_REGISTRATION
         value: "false"
       - key: DB_CONNECTION
-        value: pgsql
-      - key: DATABASE_URL
-        fromDatabase:
-          name: poc-db
-          property: connectionString
+        value: sqlite
+      - key: DB_DATABASE
+        value: /var/www/database/database.sqlite
