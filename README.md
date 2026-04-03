@@ -7,7 +7,7 @@ Laravel: Twilio inbound → record → STT → LLM → TTS → play to caller. A
 ### Deploy on [Render](https://render.com)
 
 1. Connect the repo; use root **`render.yaml`** (Blueprint) or create **Web Service** + **PostgreSQL** manually.
-2. Set **`APP_KEY`**, **`APP_URL`** (`https://your-service.onrender.com`), **`TWILIO_*`**, **`OPENAI_API_KEY`**, optional **`SARVAM_API_KEY`**. With linked Postgres use **`DB_CONNECTION=pgsql`**; **`DATABASE_URL`** is injected from Render.
+2. Set **`APP_KEY`**, **`APP_URL`** (`https://your-service.onrender.com`), **`TWILIO_*`**, **`OPENAI_API_KEY`**, optional **`SARVAM_API_KEY`**. The blueprint uses **SQLite in the container** (no managed DB bill); data is **not** kept across redeploys unless you add a database later.
 3. Twilio → Voice webhook **POST** `https://YOUR_HOST/incoming-call`.
 4. Render **Shell**: `php artisan db:seed --force` (admin from **`ADMIN_*`** in env).
 5. Then set **`TWILIO_VALIDATE_SIGNATURE=true`** when everything works.
