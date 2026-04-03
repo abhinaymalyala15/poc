@@ -11,8 +11,7 @@ databases:
 services:
   - type: web
     name: poc-web
-    runtime: native
-    env: php
+    runtime: php
     plan: free
     region: oregon
     buildCommand: composer install --no-dev --optimize-autoloader && npm ci && npm run build
