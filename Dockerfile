@@ -1,19 +1,28 @@
 FROM php:8.3-cli
 
-RUN apt-get update && apt-get install -y \
-    unzip git curl libzip-dev zip libsqlite3-dev \
-    && docker-php-ext-install zip pdo_sqlite \
+# OS deps + PHP extensions Laravel often needs on minimal images
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl gnupg git unzip \
+    libzip-dev zip libsqlite3-dev libicu-dev \
+    && docker-php-ext-install -j2 intl bcmath zip pdo_sqlite \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+ENV COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_HOME=/tmp/composer \
+    NODE_OPTIONS=--max-old-space-size=4096
+
+# Node 20 (Vite 8)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
+    && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www
 
 COPY . .
+
+RUN git config --global --add safe.directory /var/www
 
 # Build-time .env + key; Render APP_KEY overrides at runtime
 RUN cp .env.example .env \
