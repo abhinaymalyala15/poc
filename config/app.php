@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Public registration (Breeze)
+    |--------------------------------------------------------------------------
+    |
+    | Disable in production (e.g. ALLOW_REGISTRATION=false on Render) so only
+    | seeded or invited users can sign in.
+    |
+    */
+
+    'allow_registration' => (bool) env('ALLOW_REGISTRATION', true),
+
 ];

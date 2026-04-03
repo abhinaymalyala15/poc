@@ -1,0 +1,33 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# After first deploy, add in the dashboard: APP_KEY, APP_URL, Twilio/OpenAI keys, then run:
+#   php artisan db:seed --force
+# (Shell tab on the web service.)
+
+databases:
+  - name: poc-db
+    databaseName: poc
+    user: poc
+
+services:
+  - type: web
+    name: poc-web
+    runtime: native
+    env: php
+    plan: free
+    region: oregon
+    buildCommand: composer install --no-dev --optimize-autoloader && npm ci && npm run build
+    startCommand: php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT
+    healthCheckPath: /up
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: ALLOW_REGISTRATION
+        value: "false"
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: poc-db
+          property: connectionString

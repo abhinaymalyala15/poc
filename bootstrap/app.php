@@ -12,6 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $proxies = env('TRUSTED_PROXIES', '*');
+        if (! is_string($proxies) || $proxies === '') {
+            $proxies = '*';
+        }
+        $middleware->trustProxies(at: $proxies);
+
         $middleware->validateCsrfTokens(except: [
             'incoming-call',
             'process-recording',

@@ -1,3 +1,19 @@
+## AI voice POC (Twilio + OpenAI + Sarvam)
+
+Laravel: Twilio inbound → record → STT → LLM → TTS → play to caller. Admin **Call logs** (DataTables) with Breeze auth.
+
+### Deploy on [Render](https://render.com)
+
+1. Connect the repo; use root **`render.yaml`** (Blueprint) or create **Web Service** + **PostgreSQL** manually.
+2. Set **`APP_KEY`**, **`APP_URL`** (`https://your-service.onrender.com`), **`TWILIO_*`**, **`OPENAI_API_KEY`**, optional **`SARVAM_API_KEY`**. With linked Postgres use **`DB_CONNECTION=pgsql`**; **`DATABASE_URL`** is injected from Render.
+3. Twilio → Voice webhook **POST** `https://YOUR_HOST/incoming-call`.
+4. Render **Shell**: `php artisan db:seed --force` (admin from **`ADMIN_*`** in env).
+5. Then set **`TWILIO_VALIDATE_SIGNATURE=true`** when everything works.
+
+Local: `.env` from `.env.example`, `composer install`, `npm ci && npm run build`, `php artisan migrate`, `php artisan db:seed`.
+
+---
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
