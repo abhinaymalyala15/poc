@@ -2,6 +2,8 @@
 
 Laravel: Twilio inbound → record → STT → LLM → TTS → play to caller. Admin **Call logs** (DataTables) with Breeze auth.
 
+**Follow-along checklist:** [DEPLOY_5_STEPS.md](DEPLOY_5_STEPS.md)
+
 ### Deploy on [Render](https://render.com)
 
 1. Connect the repo; use root **`render.yaml`** (Blueprint) or create **Web Service** + **PostgreSQL** manually.
