@@ -20,7 +20,7 @@
 !/public/audio/.gitkeep
 /storage/*.key
 /storage/pail
-# /vendor — uncomment after vendor is committed if you want to stop tracking new vendor files locally
+/vendor
 _ide_helper.php
 Homestead.json
 Homestead.yaml
