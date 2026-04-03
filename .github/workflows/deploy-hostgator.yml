@@ -1,0 +1,120 @@
+# Deploy Laravel to HostGator over SSH (rsync).
+#
+# One-time on HostGator (cPanel):
+#   1) Create folder for the app, e.g. ~/poc (NOT public_html root).
+#   2) Point your domain’s document root to ~/poc/public (Domains → your domain → document root).
+#   3) Enable PHP 8.3 (MultiPHP Manager).
+#   4) Generate SSH key pair; add public key in cPanel → SSH Access → Import key → Authorize.
+#   5) On the server: upload .env (APP_KEY, APP_URL=https://yourdomain.com, DB_*, Twilio, etc.),
+#      then: chmod -R 775 storage bootstrap/cache && touch database/database.sqlite && chmod 664 database/database.sqlite (if using SQLite).
+#
+# GitHub repo → Settings → Secrets and variables → Actions → New repository secret:
+#   HG_HOST     e.g. your server hostname or IP (from cPanel / welcome email)
+#   HG_USER     cPanel / SSH username
+#   HG_PATH     Absolute path to app root on server, e.g. /home/username/poc
+#   HG_SSH_KEY  Full private key (-----BEGIN ... OPENSSH PRIVATE KEY-----)
+# Optional secret:
+#   HG_SSH_PORT  If not 22 (e.g. 2222)
+#   HG_PHP_BIN   If `php` is not 8.3, use cPanel path, e.g. /opt/cpanel/ea-php83/root/usr/bin/php
+#
+# Note: rsync does not use --delete so files removed from the repo are not removed on the server
+# (avoids wiping storage/logs or uploads). Clean old files manually if needed.
+
+name: Deploy to HostGator
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: hostgator-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, bcmath, zip, pdo_sqlite, pdo_mysql
+          coverage: none
+          tools: composer
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force --no-interaction
+          composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Build frontend
+        run: npm ci && npm run build
+
+      - name: Rsync to HostGator
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HG_SSH_KEY }}
+          HOST: ${{ secrets.HG_HOST }}
+          USER: ${{ secrets.HG_USER }}
+          PATH_REMOTE: ${{ secrets.HG_PATH }}
+          PORT: ${{ secrets.HG_SSH_PORT }}
+        run: |
+          test -n "$SSH_PRIVATE_KEY" && test -n "$HOST" && test -n "$USER" && test -n "$PATH_REMOTE"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          if [ -n "$PORT" ]; then
+            ssh-keyscan -H -p "$PORT" "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          else
+            ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          fi
+          SSH_OPTS="-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          if [ -n "$PORT" ]; then SSH_OPTS="$SSH_OPTS -p $PORT"; fi
+          RSYNC_SSH="ssh $SSH_OPTS"
+          rsync -avz \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='.env' \
+            --exclude='storage/logs' \
+            --exclude='tests' \
+            --exclude='phpunit.xml' \
+            --exclude='.phpunit.result.cache' \
+            --exclude='database/*.sqlite' \
+            --exclude='database/*.sqlite-journal' \
+            -e "$RSYNC_SSH" \
+            ./ "${USER}@${HOST}:${PATH_REMOTE}/"
+
+      - name: Migrate and optimize (remote)
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HG_SSH_KEY }}
+          HOST: ${{ secrets.HG_HOST }}
+          USER: ${{ secrets.HG_USER }}
+          PATH_REMOTE: ${{ secrets.HG_PATH }}
+          PORT: ${{ secrets.HG_SSH_PORT }}
+          HG_PHP_BIN: ${{ secrets.HG_PHP_BIN }}
+        run: |
+          PHP_BIN="${HG_PHP_BIN:-php}"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          if [ -n "$PORT" ]; then
+            ssh-keyscan -H -p "$PORT" "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          else
+            ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          fi
+          SSH_OPTS="-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          if [ -n "$PORT" ]; then SSH_OPTS="$SSH_OPTS -p $PORT"; fi
+          ssh $SSH_OPTS "${USER}@${HOST}" \
+            "cd '${PATH_REMOTE}' && $PHP_BIN artisan migrate --force --no-interaction && $PHP_BIN artisan optimize && ($PHP_BIN artisan storage:link 2>/dev/null || true)"
