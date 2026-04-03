@@ -1,28 +1,25 @@
 # Free SQLite-in-container (no managed Postgres).
-# Uses Projects format (Render Blueprint). Set APP_KEY, APP_URL, API keys in dashboard.
+# Root-level services (avoids "Create project poc" colliding with Blueprint name "poc").
+# Set APP_KEY, APP_URL, Twilio/OpenAI in dashboard.
 
-projects:
-  - name: poc
-    environments:
-      - name: production
-        services:
-          - name: poc-web
-            type: web
-            runtime: docker
-            repo: https://github.com/abhinaymalyala15/poc.git
-            branch: main
-            dockerfilePath: ./Dockerfile
-            plan: free
-            region: oregon
-            healthCheckPath: /up
-            envVars:
-              - key: APP_ENV
-                value: production
-              - key: LOG_CHANNEL
-                value: stderr
-              - key: ALLOW_REGISTRATION
-                value: "false"
-              - key: DB_CONNECTION
-                value: sqlite
-              - key: DB_DATABASE
-                value: /var/www/database/database.sqlite
+services:
+  - type: web
+    name: poc-web
+    runtime: docker
+    repo: https://github.com/abhinaymalyala15/poc.git
+    branch: main
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /up
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: ALLOW_REGISTRATION
+        value: "false"
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: DB_DATABASE
+        value: /var/www/database/database.sqlite
