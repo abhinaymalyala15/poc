@@ -13,6 +13,13 @@ Do these in order in your browser. This repo already includes `render.yaml` at t
 
 > **Note:** The blueprint uses **SQLite inside the container** (no paid Postgres). **Call logs / users are wiped when the service redeploys** or the disk is cleared.
 
+### If Blueprint shows **Failed sync**
+
+1. Click the blueprint / sync row and read the **error message** (Render often says exactly what’s wrong).
+2. **Sync again** after pulling the latest `main` (the repo uses a `projects:` → `environments:` layout that matches current Blueprint docs).
+3. If it still fails, **delete this Blueprint** in Render and create a **new** Blueprint from the same repo (clears a stuck state from an old `render.yaml`).
+4. Ensure the GitHub repo stays **public** if you use `plan: free` (free tier is not for private repos).
+
 ---
 
 ## Step 2 — Wait for deploy
