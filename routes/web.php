@@ -1,5 +1,7 @@
 <?php
 
+// Production: never expose web routes that run migrations, clear cache, or create users (use SSH + artisan).
+
 use App\Http\Controllers\Admin\CallLogController;
 use App\Http\Controllers\CallController;
 use App\Http\Controllers\ProfileController;
